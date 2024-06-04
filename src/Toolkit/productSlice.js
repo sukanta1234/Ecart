@@ -14,7 +14,10 @@ export const productApi = createAsyncThunk(
 export const categoryApi = createAsyncThunk(
   "https://dummyjson.com/products/categories",
   async () => {
-    let response = await axios.get("https://dummyjson.com/products/categories");
+    let response = await axios.get(
+      "https://dummyjson.com/products/category-list"
+    );
+
     return response.data;
   }
 );
@@ -112,16 +115,16 @@ const productSlice = createSlice({
       .addCase(searchApi.rejected, (state) => {
         state.status = STATUS.IDLE;
       })
-      .addCase(limitApi.pending,(state)=>{
-        state.status=STATUS.LOADING
+      .addCase(limitApi.pending, (state) => {
+        state.status = STATUS.LOADING;
       })
-      .addCase(limitApi.fulfilled,(state,action)=>{
-         state.status=STATUS.IDLE
-         state.Product=action.payload
+      .addCase(limitApi.fulfilled, (state, action) => {
+        state.status = STATUS.IDLE;
+        state.Product = action.payload;
       })
-      .addCase(limitApi.rejected,(state)=>{
-        state.status=STATUS.IDLE
-      })
+      .addCase(limitApi.rejected, (state) => {
+        state.status = STATUS.IDLE;
+      });
   },
 });
 export const { handleCart } = productSlice.actions;

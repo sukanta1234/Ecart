@@ -18,6 +18,7 @@ const SingleProduct = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { single: product } = useSelector((state) => state.product);
+  // console.log(product);
 
   useEffect(() => {
     dispatch(singleProductApi(id));
@@ -35,8 +36,10 @@ const SingleProduct = () => {
             <CardMedia
               component="img"
               height="140"
-              image={product.thumbnail}
-              alt={product.title}
+              image={product.
+                thumbnail
+                }
+              // alt={product.title}
             />
           </Card>
         </Grid>

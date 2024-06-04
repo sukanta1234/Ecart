@@ -26,6 +26,7 @@ const Home = () => {
   console.log(count);
   const dispatch = useDispatch();
   const data = useSelector((state) => state.product);
+  // console.log("category",data.Product)
   const [input, setInput] = useState("");
 
   useEffect(() => {
@@ -42,7 +43,7 @@ const Home = () => {
     dispatch(searchApi(input));
   };
   const handleLimit = () => {
-    console.log(count);
+    // console.log(count);
     dispatch(limitApi(count));
     setCount(count + 10);
   };
@@ -86,13 +87,14 @@ const Home = () => {
 
         <Grid item xs={12} md={9}>
           <Grid container spacing={3}>
-            {data.Product?.map((item) => (
+            {data?.Product?.map((item) => (
               <Grid item xs={12} sm={6} lg={4} key={item.id}>
                 <Card>
                   <CardMedia
                     sx={{ height: 140 }}
-                    image={item.thumbnail}
-                    title={item.title}
+                    image={item.thumbnail
+                    }
+                    // title={item.title}
                   />
                   <CardContent>
                     <Typography gutterBottom variant="h5" component="div">
