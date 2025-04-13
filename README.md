@@ -1,70 +1,133 @@
-# Getting Started with Create React App
+axios Instance
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+import axios from "axios";
+import store from "../../store";
+import { logout } from "../../store/features/auth";
 
-## Available Scripts
+interface IFaceGlobalResponseType<T> {
+    status: number;
+    errors?: string[];
+    data: T;
+}
 
-In the project directory, you can run:
+export type GlobalResponseType<T> = IFaceGlobalResponseType<T>;
 
-### `npm start`
+const getAccessToken = () => {
+    return store.getState().auth.token;
+};
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+const BASE_URL = import.meta.env.VITE_API_URL;
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+const axiosInstance = axios.create({
+    baseURL: BASE_URL,
+});
 
-### `npm test`
+axiosInstance.interceptors.request.use(
+    (config) => {
+        const accessToken = getAccessToken();
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+        if (accessToken) {
+            config.headers.Authorization = accessToken;
+        }
 
-### `npm run build`
+        return config;
+    },
+    (error) => {
+        // console.log("Inside-request-error", error);
+        return Promise.reject(error);
+    }
+);
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+axiosInstance.interceptors.response.use(
+    (response) => {
+        if (response.status === 403 || response.status === 401) {
+            store.dispatch(logout());
+        }
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+        return response;
+    },
+    async (error) => {
+        const originalRequest = error.config;
+        // console.log("Inside-response-error", error);
+        // OR error.response.data.status
+        if (error.response.status === 403) {
+            originalRequest._retry = true;
+            store.dispatch(logout());
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+            // try {
+            //     // const newAccessToken = await refreshAccessToken();
+            //     const newAccessToken = getAccessToken();
+            //     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-### `npm run eject`
+            //     return axiosInstance(originalRequest);
+            // } catch (refreshError) {
+            //     // If refresh fails, redirect to login or handle accordingly
+            //     console.error("Failed to refresh access token", refreshError);
+            //     // clearTokens();
+            //     store.dispatch(logout);
+            //     // redirect("/login", 401);
+            //     return Promise.reject(refreshError);
+            // }
+        }
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+        // If it's not a 401 error or the refresh attempt also fails, reject the request
+        return Promise.reject(error);
+    }
+);
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+export const fetchData = async ({
+    url,
+    abortSignal,
+}: {
+    url: string;
+    abortSignal?: AbortSignal;
+}) => {
+    try {
+        const response = await axiosInstance.get(url, {
+            signal: abortSignal,
+        });
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+        return {
+            status: response.status,
+            data: response.data,
+        };
+    } catch (error) {
+        // console.error("fetch-error", error);
+        return error;
+    }
+};
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+interface IFacePostData<T> {
+    url: string;
+    body: T;
+    abortSignal?: AbortSignal;
+}
 
-## Learn More
+export const postData = async <T>({
+    url,
+    body,
+    abortSignal,
+}: IFacePostData<T>) => {
+    const response = await axiosInstance.post(url, body, {
+        signal: abortSignal,
+    });
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+    return {
+        status: response.status,
+        data: response.data,
+    };
+};
+export const updateData = async <T>({
+    url,
+    body,
+    abortSignal,
+}: IFacePostData<T>) => {
+    const response = await axiosInstance.put(url, body, {
+        signal: abortSignal,
+    });
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+    return {
+        status: response.status,
+        data: response.data,
+    };
+};
